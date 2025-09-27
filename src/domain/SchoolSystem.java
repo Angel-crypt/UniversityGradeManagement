@@ -8,6 +8,11 @@ public class SchoolSystem {
     private List<Teacher> teacherList = new ArrayList<>();
     private List<Course> coursesList = new ArrayList<>();
     private List<Enrollment> enrollmentList = new ArrayList<>();
+    private final DisplayManager displayManager;
+
+    public SchoolSystem() {
+        this.displayManager = new DisplayManager();
+    }
 
     public Teacher findTeacherById(String id) {
         for (Teacher t : teacherList) {
@@ -31,6 +36,15 @@ public class SchoolSystem {
         for (Course c : coursesList) {
             if (c.getId().equals(id)) {
                 return c;
+            }
+        }
+        return null;
+    }
+
+    public Enrollment findEnrollment(String studentId, String courseId){
+        for (Enrollment e : enrollmentList){
+            if (e.getStudent().getId().equals(studentId) && e.getCourse().getId().equals(courseId)){
+                return e;
             }
         }
         return null;
@@ -68,16 +82,18 @@ public class SchoolSystem {
         Course course = findCourseById(courseId);
 
         if (student == null) {
-            System.out.println("Estudiante no encontrado.");
+            System.out.println("Estudiante con ID " + studentId + " no encontrado.");
             return;
         }
         if (course == null) {
-            System.out.println("Curso no encontrado.");
+            System.out.println("Curso con ID " + courseId + " no encontrado.");
             return;
         }
 
         if (student.getEnrolledCoursesCount() >= Constants.MAX_SUBJECTS_PER_STUDENT) {
-            System.out.println("Máximo de materias alcanzado");
+            System.out.println("El estudiante " + student.getName() +
+                    " ya alcanzó el máximo de materias (" +
+                    Constants.MAX_SUBJECTS_PER_STUDENT + ")");
             return;
         }
 
@@ -87,53 +103,77 @@ public class SchoolSystem {
         System.out.println("Alumno " + student.getName() + " inscrito correctamente al curso " + course.getName());
     }
 
-    public void displayAllStudents() {
-        if (!studentList.isEmpty()){
-            System.out.println("\n=== ESTUDIANTES ===");
-            for (Student s : studentList){
-                s.displayInfo();
-            }
-        } else {
-            System.out.println("No hay estudiantes registrados.");
+    public void registerGrade(String studentId, String courseId, float grade) {
+        if (grade < 0 || grade > 10) {
+            System.out.println("La calificación debe estar entre 0 y 10.");
+            return;
         }
+
+        Enrollment enrollment = findEnrollment(studentId, courseId);
+        if (enrollment == null) {
+            System.out.println("No se encontró la inscripción del estudiante en este curso.");
+            return;
+        }
+
+        enrollment.setGrade(grade);
+        System.out.println("Calificación " + grade + " registrada para " +
+                enrollment.getStudent().getName() +
+                " en el curso " + enrollment.getCourse().getName());
     }
-    public void displayAllTeachers() {
-        if (!teacherList.isEmpty()){
-            System.out.println("\n=== PROFESORES ===");
-            for (Teacher t : teacherList){
-                t.displayInfo();
-            }
-        } else {
-            System.out.println("No hay profesores registrados.");
+
+    public float calculateStudentAverage(String studentId) {
+        Student student = findStudentById(studentId);
+        if (student == null) {
+            System.out.println("Estudiante no encontrado.");
+            return -1;
         }
+
+        List<Enrollment> studentEnrollments = getStudentEnrollments(studentId);
+        if (studentEnrollments.isEmpty()) {
+            System.out.println("El estudiante no tiene inscripciones con calificaciones.");
+            return 0;
+        }
+
+        float sum = 0;
+        int count = 0;
+        for (Enrollment e : studentEnrollments) {
+            sum += e.getGrade();
+            count ++;
+        }
+
+        return count > 0 ? sum / count : 0;
+    }
+
+    private List<Enrollment> getStudentEnrollments(String studentId) {
+        List<Enrollment> enrollments = new ArrayList<>();
+        for (Enrollment e : enrollmentList) {
+            if (e.getStudent().getId().equals(studentId)){
+                enrollments.add(e);
+            }
+        }
+        return enrollments;
+    }
+
+    public void displayAllStudents() {
+        displayManager.displayAllStudents(studentList);
+    }
+
+    public void displayAllTeachers() {
+        displayManager.displayAllTeachers(teacherList);
     }
 
     public void displayAllCourses() {
-        if (!coursesList.isEmpty()){
-            System.out.println("\n=== Cursos ===");
-            for (Course c : coursesList){
-                c.displayInfo();
-            }
-        } else {
-            System.out.println("No hay cursos registrados.");
-        }
+        displayManager.displayAllCourses(coursesList);
     }
 
     public void displayAllEnrollments() {
-        if (!enrollmentList.isEmpty()){
-            System.out.println("\n=== Inscripciones ===");
-            for (Enrollment e : enrollmentList){
-                e.displayInfo();
-            }
-        } else {
-            System.out.println("No hay cursos registrados.");
-        }
+        displayManager.displayAllEnrollments(enrollmentList);
     }
 
     public void displayAll() {
-        displayAllStudents();
-        displayAllTeachers();
-        displayAllCourses();
-        displayAllEnrollments();
+        displayManager.displaySystemSummary(studentList, teacherList, coursesList, enrollmentList);
+    }
+    public void displayStudentAverage(float average) {
+        displayManager.displayStudentAverage(average);
     }
 }

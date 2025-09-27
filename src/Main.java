@@ -20,6 +20,18 @@ public class Main {
 
         school.enrollStudent("GU23IA0001","PR1");
 
+        school.registerGrade("GU23IA0001", "PR1", 10);
+
         school.displayAll();
+
+        String studentId = "GU23IA0001";
+        String courseId = "BA2";
+        school.enrollStudent(studentId, courseId);
+        school.registerGrade(studentId, courseId, 6);
+
+        float average = school.calculateStudentAverage("GU23IA0001");
+        school.displayStudentAverage(average);
+
+        school.registerGrade("GU23IA0008", "PR1", 10);
     }
 }
